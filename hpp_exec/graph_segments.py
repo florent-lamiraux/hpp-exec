@@ -143,6 +143,20 @@ def segments_from_graph(
     return configs, times, segments
 
 
+def segments_by_transition(
+    segments: Iterable[Segment],
+) -> dict[str, list[Segment]]:
+    by_transition = {}
+
+    for index, segment in enumerate(segments):
+        name = segment.transition_name
+        if not name:
+            raise ValueError(f"Segment {index} has no transition name")
+        by_transition.setdefault(name, []).append(segment)
+
+    return by_transition
+
+
 def format_segments(segments: Iterable[Segment]) -> str:
     def state_pair(before: str, after: str) -> str:
         if before and after:
