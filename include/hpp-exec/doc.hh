@@ -103,6 +103,9 @@
 ///     joint_names: list[str],
 ///     joint_indices: list[int] | None = None,
 ///     controller_topic: str = "/joint_trajectory_controller/follow_joint_trajectory",
+///     *,
+///     pre_actions_by_transition: dict[str, Callable | list[Callable]] | None = None,
+///     post_actions_by_transition: dict[str, Callable | list[Callable]] | None = None,
 /// ) -> bool
 /// \endcode
 ///
@@ -224,6 +227,11 @@
 /// at <tt>t = 0</tt>, which is what \c FollowJointTrajectory expects.
 /// A segment containing fewer than two configurations is treated as a
 /// pure action point: the trajectory is skipped and only the actions run.
+/// As an alternative to filling \c Segment action lists directly,
+/// \c execute_segments accepts \c pre_actions_by_transition and
+/// \c post_actions_by_transition dictionaries keyed by exact graph transition
+/// name. Each value can be one callable or an ordered list/tuple of callables.
+/// Unknown transition names abort before any action or trajectory is run.
 ///
 /// \c execute_segments assumes that the \c times list already contains
 /// seconds for the whole path. Apply time parameterization in HPP before
@@ -259,6 +267,23 @@
 ///     configs,
 ///     times,
 ///     joint_names=[...],
+/// )
+///
+/// # Or leave the segments untouched and attach actions by transition name:
+/// pre_actions = {
+///     "fr3/gripper > box/handle | f_23": grasp_box,
+/// }
+/// post_actions = {
+///     "fr3/gripper < box/handle | 0-0_32": release_box,
+/// }
+///
+/// execute_segments(
+///     segments,
+///     configs,
+///     times,
+///     joint_names=[...],
+///     pre_actions_by_transition=pre_actions,
+///     post_actions_by_transition=post_actions,
 /// )
 /// \endcode
 ///

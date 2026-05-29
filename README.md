@@ -99,7 +99,7 @@ send_trajectory(
 configs, times, segments = segments_from_graph(path, graph)
 print_segments(segments)
 
-# Add actions exactly where this manipulation problem needs them.
+# Existing segment API: add actions exactly where this problem needs them.
 segments[1].pre_actions.append(close_gripper)
 segments[3].pre_actions.append(open_gripper)
 
@@ -114,6 +114,24 @@ execute_segments(
     configs,
     times,
     joint_names,
+)
+
+# Dictionary API: instead of the manual appends above, leave segments
+# unchanged and attach actions by graph transition name when starting execution.
+pre_actions = {
+    "fr3/gripper > box/handle | f_23": grasp_box,
+}
+post_actions = {
+    "fr3/gripper < box/handle | 0-0_32": release_box,
+}
+
+execute_segments(
+    segments,
+    configs,
+    times,
+    joint_names,
+    pre_actions_by_transition=pre_actions,
+    post_actions_by_transition=post_actions,
 )
 ```
 
