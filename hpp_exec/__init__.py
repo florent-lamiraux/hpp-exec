@@ -18,7 +18,12 @@ Example:
 """
 
 from hpp_exec.actions import BackgroundAction
-from hpp_exec.graph_segments import format_segments, print_segments, segments_from_graph
+from hpp_exec.graph_segments import (
+    format_segments,
+    print_segments,
+    segments_by_transition,
+    segments_from_graph,
+)
 from hpp_exec.segments import Segment
 
 __version__ = "0.1.0"
@@ -61,6 +66,7 @@ __all__ = [
     "configs_to_joint_trajectory",
     "extract_joint_config",
     "segments_from_graph",
+    "segments_by_transition",
     "format_segments",
     "print_segments",
 ]

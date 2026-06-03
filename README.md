@@ -82,6 +82,7 @@ from hpp_exec import (
     BackgroundAction,
     Segment,
     execute_segments,
+    segments_by_transition,
     print_segments,
     send_trajectory,
     segments_from_graph,
@@ -99,9 +100,12 @@ send_trajectory(
 configs, times, segments = segments_from_graph(path, graph)
 print_segments(segments)
 
-# Add actions exactly where this manipulation problem needs them.
-segments[1].pre_actions.append(close_gripper)
-segments[3].pre_actions.append(open_gripper)
+# Inspect every occurrence of each graph transition.
+segments_by_name = segments_by_transition(segments)
+segments_by_name["fr3/gripper > box/handle | f_23"][0].pre_actions.append(grasp_box)
+segments_by_name["fr3/gripper < box/handle | 0-0_21"][0].pre_actions.append(
+    release_box
+)
 
 # Or overlap a blocking action with the next segment's arm motion.
 background_open = BackgroundAction(open_gripper, name="open_gripper")
@@ -114,6 +118,25 @@ execute_segments(
     configs,
     times,
     joint_names,
+)
+
+# Dictionary API: instead of the manual appends above, leave segments
+# unchanged and attach actions by graph transition name when starting execution.
+# This applies the action to every segment with that transition name.
+pre_actions = {
+    "fr3/gripper > box/handle | f_23": grasp_box,
+}
+post_actions = {
+    "fr3/gripper < box/handle | 0-0_21": release_box,
+}
+
+execute_segments(
+    segments,
+    configs,
+    times,
+    joint_names,
+    pre_actions_by_transition=pre_actions,
+    post_actions_by_transition=post_actions,
 )
 ```
 

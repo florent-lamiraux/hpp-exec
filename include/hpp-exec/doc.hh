@@ -70,6 +70,7 @@
 ///     send_trajectory_async,
 ///     execute_segments,
 ///     segments_from_graph,
+///     segments_by_transition,
 ///     format_segments,
 ///     print_segments,
 ///     configs_to_joint_trajectory,
@@ -103,6 +104,9 @@
 ///     joint_names: list[str],
 ///     joint_indices: list[int] | None = None,
 ///     controller_topic: str = "/joint_trajectory_controller/follow_joint_trajectory",
+///     *,
+///     pre_actions_by_transition: dict[str, Callable | list[Callable]] | None = None,
+///     post_actions_by_transition: dict[str, Callable | list[Callable]] | None = None,
 /// ) -> bool
 /// \endcode
 ///
@@ -128,6 +132,9 @@
 ///     sample_params: Iterable[float] | None = None,
 /// ) -> tuple[list[np.ndarray], list[float], list[Segment]]
 ///
+/// segments_by_transition(
+///     segments: Iterable[Segment],
+/// ) -> dict[str, list[Segment]]
 /// format_segments(segments: Iterable[Segment]) -> str
 /// print_segments(segments: Iterable[Segment]) -> None
 /// \endcode
@@ -224,6 +231,11 @@
 /// at <tt>t = 0</tt>, which is what \c FollowJointTrajectory expects.
 /// A segment containing fewer than two configurations is treated as a
 /// pure action point: the trajectory is skipped and only the actions run.
+/// As an alternative to filling \c Segment action lists directly,
+/// \c execute_segments accepts \c pre_actions_by_transition and
+/// \c post_actions_by_transition dictionaries keyed by exact graph transition
+/// name. Each value can be one callable or an ordered list/tuple of callables.
+/// Unknown transition names abort before any action or trajectory is run.
 ///
 /// \c execute_segments assumes that the \c times list already contains
 /// seconds for the whole path. Apply time parameterization in HPP before
@@ -241,24 +253,44 @@
 /// segment.
 ///
 /// The printed table shows the transition names, states, timing, and action
-/// counts for each segment.
+/// counts for each segment. \c segments_by_transition builds a dictionary
+/// from transition name to the list of matching segments, because a path can
+/// traverse the same graph transition more than once.
 ///
 /// \code{.py}
 /// from hpp_exec import execute_segments, print_segments
-/// from hpp_exec.graph_segments import segments_from_graph
+/// from hpp_exec.graph_segments import segments_by_transition, segments_from_graph
 ///
 /// configs, times, segments = segments_from_graph(path, graph)
 /// print_segments(segments)
 ///
 /// # For this known pick-and-place graph:
-/// segments[2].pre_actions.append(gripper.close)
-/// segments[5].pre_actions.append(gripper.open)
+/// segments_by_name = segments_by_transition(segments)
+/// segments_by_name["fr3/gripper > box/handle | f_23"][0].pre_actions.append(grasp_box)
+/// segments_by_name["fr3/gripper < box/handle | 0-0_21"][0].pre_actions.append(release_box)
 ///
 /// execute_segments(
 ///     segments,
 ///     configs,
 ///     times,
 ///     joint_names=[...],
+/// )
+///
+/// # Or leave the segments untouched and attach actions by transition name:
+/// pre_actions = {
+///     "fr3/gripper > box/handle | f_23": grasp_box,
+/// }
+/// post_actions = {
+///     "fr3/gripper < box/handle | 0-0_21": release_box,
+/// }
+///
+/// execute_segments(
+///     segments,
+///     configs,
+///     times,
+///     joint_names=[...],
+///     pre_actions_by_transition=pre_actions,
+///     post_actions_by_transition=post_actions,
 /// )
 /// \endcode
 ///
