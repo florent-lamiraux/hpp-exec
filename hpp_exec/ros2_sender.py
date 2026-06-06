@@ -38,7 +38,7 @@ Example:
 import logging
 import threading
 from itertools import count
-from typing import Callable, List, Mapping, Optional, Sequence
+from typing import Callable, List, Optional
 
 import numpy as np
 import rclpy
@@ -289,7 +289,8 @@ def execute_segments(
     for i, segment in enumerate(segments):
         # 1. Pre-actions
         pre_actions = segment.pre_actions + pre_actions_by_transition.get(
-            segment.transition_name, [])
+            segment.transition_name, []
+        )
         for action in pre_actions:
             action_name = _action_name(action)
             logger.info("Segment %d: running pre-action '%s'", i, action_name)
@@ -329,7 +330,8 @@ def execute_segments(
 
         # 3. Post-actions
         post_actions = segment.post_actions + post_actions_by_transition.get(
-            segment.transition_name, [])
+            segment.transition_name, []
+        )
         for action in post_actions:
             action_name = _action_name(action)
             logger.info("Segment %d: running post-action '%s'", i, action_name)
