@@ -30,8 +30,8 @@ Example:
         configs,
         times,
         joint_names=[...],
-        pre_actions_by_transition={"grasp transition": gripper.close},
-        post_actions_by_transition={"release transition": gripper.open},
+        pre_actions_by_transition={"grasp transition": [gripper.close]},
+        post_actions_by_transition={"release transition": [gripper.open]},
     )
 """
 
@@ -259,8 +259,8 @@ def execute_segments(
     joint_indices: Optional[List[int]] = None,
     controller_topic: str = "/joint_trajectory_controller/follow_joint_trajectory",
     *,
-    pre_actions_by_transition: dict = dict(),
-    post_actions_by_transition: dict = dict(),
+    pre_actions_by_transition: dict[str, list[Action]] | None = None,
+    post_actions_by_transition: dict[str, list[Action]] | None = None,
 ) -> bool:
     """Execute trajectory segments with pre/post action hooks.
 
@@ -279,13 +279,18 @@ def execute_segments(
             Default: 0..len(joint_names).
         controller_topic: FollowJointTrajectory action topic.
         pre_actions_by_transition: Optional mapping from HPP graph transition
-            names to an ordered sequence of actions to run before matching segments.
+            names to ordered lists of actions to run before matching segments.
         post_actions_by_transition: Optional mapping from HPP graph transition
-            names to an ordered sequence of actions to run after matching segments.
+            names to ordered lists of actions to run after matching segments.
 
     Returns:
         True if all segments and actions succeeded.
     """
+    if pre_actions_by_transition is None:
+        pre_actions_by_transition = {}
+    if post_actions_by_transition is None:
+        post_actions_by_transition = {}
+
     for i, segment in enumerate(segments):
         # 1. Pre-actions
         pre_actions = segment.pre_actions + pre_actions_by_transition.get(
